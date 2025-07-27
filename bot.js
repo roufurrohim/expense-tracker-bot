@@ -26,6 +26,11 @@ const serviceAccountAuth = new JWT({
 
 let doc;
 
+// Fungsi helper untuk escape Markdown
+function escapeMarkdown(text) {
+    return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
+}
+
 // Inisialisasi Google Sheets
 async function initializeGoogleSheets() {
     try {
@@ -309,27 +314,50 @@ async function addExpense(userId, username, amount, description) {
 // Command /start
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
-    const welcomeMessage = `
-🏦 *Selamat datang di Expense Tracker Bot!*
+    const welcomeMessage = `🏦 *Selamat datang di Expense Tracker Bot\\!*
 
-Bot ini akan mencatat pengeluaran Anda ke Google Sheets secara otomatis.
+Bot ini akan mencatat pengeluaran Anda ke Google Sheets secara otomatis\\.
 
 *Cara menggunakan:*
-• Ketik jumlah dan deskripsi: \`50000 makan siang\`
-• /hari - Lihat pengeluaran hari ini
-• /minggu - Lihat pengeluaran minggu ini
-• /export - Export data lokal ke Google Sheets
-• /sheets - Dapatkan link Google Sheets
-• /help - Bantuan
+• Ketik jumlah dan deskripsi: 50000 makan siang
+• /hari \\- Lihat pengeluaran hari ini
+• /minggu \\- Lihat pengeluaran minggu ini
+• /export \\- Export data lokal ke Google Sheets
+• /sheets \\- Dapatkan link Google Sheets
+• /help \\- Bantuan
 
 *Fitur Google Sheets:*
-✅ Auto-sync setiap pengeluaran
+✅ Auto\\-sync setiap pengeluaran
 ✅ Daily summary otomatis
 ✅ Data backup lokal
-✅ Export manual jika diperlukan
-    `;
+✅ Export manual jika diperlukan`;
     
-    bot.sendMessage(chatId, welcomeMessage, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, welcomeMessage, { parse_mode: 'MarkdownV2' });
+});
+
+// Command /help
+bot.onText(/\/help/, async (msg) => {
+    const chatId = msg.chat.id;
+    const helpMessage = `📋 *Bantuan Expense Tracker Bot*
+
+*Format input pengeluaran:*
+Ketik: jumlah spasi deskripsi
+Contoh: 50000 makan siang
+
+*Perintah yang tersedia:*
+/start \\- Pesan selamat datang
+/hari \\- Lihat pengeluaran hari ini
+/minggu \\- Lihat pengeluaran minggu ini
+/export \\- Export data lokal ke Google Sheets
+/sheets \\- Link ke Google Sheets
+/help \\- Bantuan ini
+
+*Tips:*
+• Pastikan format angka tanpa titik atau koma
+• Deskripsi bisa lebih dari satu kata
+• Data otomatis tersimpan ke Google Sheets`;
+    
+    bot.sendMessage(chatId, helpMessage, { parse_mode: 'MarkdownV2' });
 });
 
 // Command /sheets - Berikan link ke Google Sheets
@@ -337,18 +365,20 @@ bot.onText(/\/sheets/, async (msg) => {
     const chatId = msg.chat.id;
     
     if (!GOOGLE_SHEET_ID || GOOGLE_SHEET_ID === 'YOUR_GOOGLE_SHEET_ID') {
-        bot.sendMessage(chatId, '❌ Google Sheets belum dikonfigurasi.');
+        bot.sendMessage(chatId, '❌ Google Sheets belum dikonfigurasi\\.');
         return;
     }
     
     const sheetsUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}`;
-    bot.sendMessage(chatId, 
-        `📊 *Google Sheets Anda:*\n\n${sheetsUrl}\n\n` +
-        `*Sheets yang tersedia:*\n` +
-        `• Expenses - Detail semua pengeluaran\n` +
-        `• Daily Summary - Ringkasan harian`,
-        { parse_mode: 'Markdown' }
-    );
+    const message = `📊 *Google Sheets Anda:*
+
+${sheetsUrl}
+
+*Sheets yang tersedia:*
+• Expenses \\- Detail semua pengeluaran
+• Daily Summary \\- Ringkasan harian`;
+    
+    bot.sendMessage(chatId, message, { parse_mode: 'MarkdownV2' });
 });
 
 // Command /export - Export data lokal ke sheets
@@ -357,21 +387,21 @@ bot.onText(/\/export/, async (msg) => {
     const userId = msg.from.id.toString();
     
     if (!doc) {
-        bot.sendMessage(chatId, '❌ Google Sheets tidak tersedia.');
+        bot.sendMessage(chatId, '❌ Google Sheets tidak tersedia\\.');
         return;
     }
     
-    bot.sendMessage(chatId, '⏳ Mengexport data ke Google Sheets...');
+    bot.sendMessage(chatId, '⏳ Mengexport data ke Google Sheets\\.\\.\\.');
     
     try {
         const success = await exportAllDataToSheets(userId);
         if (success) {
-            bot.sendMessage(chatId, '✅ Data berhasil diexport ke Google Sheets!');
+            bot.sendMessage(chatId, '✅ Data berhasil diexport ke Google Sheets\\!');
         } else {
-            bot.sendMessage(chatId, '❌ Tidak ada data untuk diexport.');
+            bot.sendMessage(chatId, '❌ Tidak ada data untuk diexport\\.');
         }
     } catch (error) {
-        bot.sendMessage(chatId, '❌ Terjadi kesalahan saat export data.');
+        bot.sendMessage(chatId, '❌ Terjadi kesalahan saat export data\\.');
         console.error('Export error:', error);
     }
 });
@@ -399,7 +429,7 @@ bot.onText(/\/hari/, async (msg) => {
         }
         
         if (todayExpenses.length === 0) {
-            bot.sendMessage(chatId, '📝 Belum ada pengeluaran hari ini.');
+            bot.sendMessage(chatId, '📝 Belum ada pengeluaran hari ini\\.');
             return;
         }
         
@@ -408,19 +438,103 @@ bot.onText(/\/hari/, async (msg) => {
         const todayOnly = todayExpenses.filter(exp => exp.date === today);
         const total = todayOnly.reduce((sum, exp) => sum + exp.amount, 0);
         
-        let message = `📅 *Pengeluaran Hari Ini (${today})*\n\n`;
+        let message = `📅 *Pengeluaran Hari Ini \\(${escapeMarkdown(today)}\\)*\n\n`;
         
         todayOnly.forEach((expense, index) => {
-            message += `${index + 1}. ${formatCurrency(expense.amount)} - ${expense.description} (${expense.time})\n`;
+            const formattedAmount = escapeMarkdown(formatCurrency(expense.amount));
+            const escapedDesc = escapeMarkdown(expense.description);
+            const escapedTime = escapeMarkdown(expense.time);
+            message += `${index + 1}\\. ${formattedAmount} \\- ${escapedDesc} \\(${escapedTime}\\)\n`;
         });
         
-        message += `\n💰 *Total: ${formatCurrency(total)}*`;
+        const formattedTotal = escapeMarkdown(formatCurrency(total));
+        message += `\n💰 *Total: ${formattedTotal}*`;
         message += doc ? '\n📊 *Data dari Google Sheets*' : '\n💾 *Data dari penyimpanan lokal*';
         
-        bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, message, { parse_mode: 'MarkdownV2' });
     } catch (error) {
-        bot.sendMessage(chatId, '❌ Terjadi kesalahan saat mengambil data.');
+        bot.sendMessage(chatId, '❌ Terjadi kesalahan saat mengambil data\\.');
         console.error('Error getting today expenses:', error);
+    }
+});
+
+// Command /minggu - Lihat pengeluaran minggu ini
+bot.onText(/\/minggu/, async (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id.toString();
+    
+    try {
+        // Coba ambil dari Google Sheets dulu
+        let weekExpenses = await getExpensesFromSheets(userId, 7);
+        
+        // Fallback ke data lokal jika sheets tidak tersedia
+        if (!weekExpenses) {
+            const expenses = await readExpenses();
+            weekExpenses = [];
+            
+            // Ambil data 7 hari terakhir
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateString = date.toISOString().split('T')[0];
+                
+                if (expenses[userId]?.[dateString]) {
+                    expenses[userId][dateString].forEach(exp => {
+                        weekExpenses.push({
+                            date: dateString,
+                            time: new Date(exp.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                            amount: exp.amount,
+                            description: exp.description
+                        });
+                    });
+                }
+            }
+        }
+        
+        if (weekExpenses.length === 0) {
+            bot.sendMessage(chatId, '📝 Belum ada pengeluaran minggu ini\\.');
+            return;
+        }
+        
+        // Group by date
+        const groupedByDate = {};
+        weekExpenses.forEach(exp => {
+            if (!groupedByDate[exp.date]) {
+                groupedByDate[exp.date] = [];
+            }
+            groupedByDate[exp.date].push(exp);
+        });
+        
+        let message = `📅 *Pengeluaran Minggu Ini*\n\n`;
+        let grandTotal = 0;
+        
+        Object.keys(groupedByDate)
+            .sort((a, b) => new Date(b) - new Date(a))
+            .forEach(date => {
+                const dayExpenses = groupedByDate[date];
+                const dayTotal = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+                grandTotal += dayTotal;
+                
+                const escapedDate = escapeMarkdown(date);
+                const escapedTotal = escapeMarkdown(formatCurrency(dayTotal));
+                message += `*${escapedDate}* \\- ${escapedTotal}\n`;
+                
+                dayExpenses.forEach(exp => {
+                    const formattedAmount = escapeMarkdown(formatCurrency(exp.amount));
+                    const escapedDesc = escapeMarkdown(exp.description);
+                    message += `  • ${formattedAmount} \\- ${escapedDesc}\n`;
+                });
+                message += '\n';
+            });
+        
+        const formattedGrandTotal = escapeMarkdown(formatCurrency(grandTotal));
+        message += `💰 *Total Minggu: ${formattedGrandTotal}*`;
+        message += doc ? '\n📊 *Data dari Google Sheets*' : '\n💾 *Data dari penyimpanan lokal*';
+        
+        bot.sendMessage(chatId, message, { parse_mode: 'MarkdownV2' });
+    } catch (error) {
+        bot.sendMessage(chatId, '❌ Terjadi kesalahan saat mengambil data\\.');
+        console.error('Error getting week expenses:', error);
     }
 });
 
@@ -442,8 +556,8 @@ bot.on('message', async (msg) => {
     // Validasi input
     if (!amount || !description || isNaN(amount) || parseFloat(amount) <= 0) {
         bot.sendMessage(chatId, 
-            '❌ Format tidak valid. Gunakan: `[jumlah] [deskripsi]`\nContoh: `50000 makan siang`',
-            { parse_mode: 'Markdown' }
+            '❌ Format tidak valid\\. Gunakan: \\[jumlah\\] \\[deskripsi\\]\nContoh: 50000 makan siang',
+            { parse_mode: 'MarkdownV2' }
         );
         return;
     }
@@ -464,14 +578,20 @@ bot.on('message', async (msg) => {
         let statusIcon = sheetsSuccess ? '📊' : '💾';
         let statusText = sheetsSuccess ? 'Google Sheets' : 'penyimpanan lokal';
         
+        const formattedAmount = escapeMarkdown(formatCurrency(parseFloat(amount)));
+        const escapedDesc = escapeMarkdown(description);
+        const formattedTotal = escapeMarkdown(formatCurrency(total));
+        const escapedStatus = escapeMarkdown(statusText);
+        
         bot.sendMessage(chatId, 
-            `✅ Pengeluaran berhasil dicatat!\n\n` +
-            `💰 ${formatCurrency(parseFloat(amount))} - ${description}\n` +
-            `📊 Total hari ini: ${formatCurrency(total)}\n` +
-            `${statusIcon} Disimpan ke ${statusText}`
+            `✅ Pengeluaran berhasil dicatat\\!\n\n` +
+            `💰 ${formattedAmount} \\- ${escapedDesc}\n` +
+            `📊 Total hari ini: ${formattedTotal}\n` +
+            `${statusIcon} Disimpan ke ${escapedStatus}`,
+            { parse_mode: 'MarkdownV2' }
         );
     } catch (error) {
-        bot.sendMessage(chatId, '❌ Terjadi kesalahan saat menyimpan pengeluaran.');
+        bot.sendMessage(chatId, '❌ Terjadi kesalahan saat menyimpan pengeluaran\\.');
         console.error('Error adding expense:', error);
     }
 });
@@ -479,6 +599,11 @@ bot.on('message', async (msg) => {
 // Error handling
 bot.on('error', (error) => {
     console.error('Bot error:', error);
+});
+
+// Polling error handling
+bot.on('polling_error', (error) => {
+    console.error('Polling error:', error);
 });
 
 // Inisialisasi dan start bot
