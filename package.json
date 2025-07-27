@@ -18,6 +18,7 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
+    "dotenv": "17.2.1",
     "node-telegram-bot-api": "^0.64.0",
     "google-spreadsheet": "^4.1.2",
     "google-auth-library": "^9.4.1"
