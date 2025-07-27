@@ -6,8 +6,8 @@ const path = require('path');
 require('dotenv').config();
 
 // Environment variables
-const BOT_TOKEN = process.env.BOT_TOKEN || '6376570426:AAFTdsn9D1qeqa7VHFLTEe24eV6JRT-tfB8';
-const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || '1c6h4qs_6KDIz1xsj5I5ML1qWciy9HcqFhbhtrvpdd8E';
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
 const GOOGLE_SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY;
 
