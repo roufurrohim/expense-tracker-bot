@@ -370,9 +370,10 @@ bot.onText(/\/sheets/, async (msg) => {
     }
     
     const sheetsUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}`;
+    const escapedUrl = escapeMarkdown(sheetsUrl);
     const message = `📊 *Google Sheets Anda:*
 
-${sheetsUrl}
+${escapedUrl}
 
 *Sheets yang tersedia:*
 • Expenses \\- Detail semua pengeluaran
